@@ -1,17 +1,11 @@
 pipeline {
-    agent any
-
-    tools {
-        nodejs 'node-lts'
+    agent {
+        docker {
+            image 'node:18'
+        }
     }
 
     stages {
-        stage('Checkout') {
-            steps {
-                checkout scm
-            }
-        }
-
         stage('Install') {
             steps {
                 sh 'npm install'
@@ -27,7 +21,7 @@ pipeline {
 
     post {
         success {
-            echo '✅ Aman (no high vulnerabilities)'
+            echo '✅ Aman'
         }
         failure {
             echo '🚨 Ada vulnerability!'
