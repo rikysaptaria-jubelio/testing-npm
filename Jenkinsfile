@@ -1,14 +1,14 @@
 pipeline {
-    agent {
-        docker {
-            image 'node:18'
-        }
+    agent any
+
+    tools {
+        nodejs 'node-lts'
     }
 
     stages {
         stage('Checkout') {
             steps {
-                deleteDir()   // clean workspace
+                deleteDir()
                 checkout scm
             }
         }
