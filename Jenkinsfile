@@ -8,12 +8,11 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                deleteDir()   // 🔥 ini penting (clean workspace)
+                deleteDir()   // clean workspace
                 checkout scm
             }
-    }
-         
-    stages {
+        }
+
         stage('Install') {
             steps {
                 sh 'npm install'
