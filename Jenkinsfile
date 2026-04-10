@@ -1,9 +1,8 @@
 pipeline {
-    agent {
-        docker {
-            image 'node:18-alpine'
-            args '--network=none --memory=512m --cpus=0.5'
-        }
+    agent any
+
+    tools {
+        nodejs 'node-lts'
     }
 
     options {
@@ -22,10 +21,7 @@ pipeline {
             steps {
                 sh '''
                 if [ ! -f package-lock.json ]; then
-                  echo "No lock file found, generating safely..."
                   npm install --ignore-scripts --package-lock-only
-                else
-                  echo "Using existing lock file"
                 fi
                 '''
             }
@@ -46,11 +42,6 @@ pipeline {
                     def critical = audit.metadata.vulnerabilities.critical ?: 0
                     def moderate = audit.metadata.vulnerabilities.moderate ?: 0
 
-                    echo "🔍 Vulnerability Summary:"
-                    echo "Moderate: ${moderate}"
-                    echo "High: ${high}"
-                    echo "Critical: ${critical}"
-
                     if (critical > 0 || high > 0) {
                         currentBuild.result = 'FAILURE'
                     } else if (moderate > 0) {
@@ -62,6 +53,7 @@ pipeline {
             }
         }
     }
+}
 
     post {
         failure {
