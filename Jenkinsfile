@@ -21,7 +21,7 @@ pipeline {
 
         stage('Audit JSON') {
             steps {
-                sh 'npm audit --json > audit.json'
+                sh 'npm audit --json > audit.json || true'
             }
         }
 
@@ -29,16 +29,15 @@ pipeline {
             steps {
                 script {
                     def audit = readJSON file: 'audit.json'
-
+        
                     def high = audit.metadata.vulnerabilities.high
                     def critical = audit.metadata.vulnerabilities.critical
                     def moderate = audit.metadata.vulnerabilities.moderate
-
+        
                     echo "Moderate: ${moderate}"
                     echo "High: ${high}"
                     echo "Critical: ${critical}"
-
-                    // Logic
+        
                     if (critical > 0 || high > 0) {
                         currentBuild.result = 'FAILURE'
                     } else if (moderate > 0) {
