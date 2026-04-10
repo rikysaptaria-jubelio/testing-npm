@@ -52,14 +52,20 @@ pipeline {
     }
 
     post {
-        success {
-            echo '✅ No vulnerabilities'
-        }
-        unstable {
-            echo '⚠️ Moderate vulnerabilities found'
-        }
-        failure {
-            echo '🚨 High/Critical vulnerabilities found'
-        }
+    failure {
+        emailext(
+            subject: "🚨 HIGH/CRITICAL Vulnerability Detected",
+            body: "Check Jenkins build: ${env.BUILD_URL}",
+            to: "itsec@jubelio.com"
+        )
     }
+
+    unstable {
+        emailext(
+            subject: "⚠️ Moderate Vulnerability Warning",
+            body: "Check Jenkins build: ${env.BUILD_URL}",
+            to: "itsec@jubelio.com"
+        )
+    }
+}
 }
