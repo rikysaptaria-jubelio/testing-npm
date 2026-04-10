@@ -88,4 +88,3 @@ Terdapat vulnerability level moderate.
             echo '✅ Aman'
         }
     }
-}
