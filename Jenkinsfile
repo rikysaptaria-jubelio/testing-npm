@@ -42,49 +42,52 @@ pipeline {
                     def critical = audit.metadata.vulnerabilities.critical ?: 0
                     def moderate = audit.metadata.vulnerabilities.moderate ?: 0
 
-                    if (critical > 0 || high > 0) {
-                        currentBuild.result = 'FAILURE'
-                    } else if (moderate > 0) {
-                        currentBuild.result = 'UNSTABLE'
-                    } else {
-                        currentBuild.result = 'SUCCESS'
+                    // 🔹 Summary
+                    env.AUDIT_SUMMARY = """\
+Summary:
+- Critical: ${critical}
+- High: ${high}
+- Moderate: ${moderate}
+"""
+
+                    // 🔹 Detail
+                    def details = ""
+                    audit.vulnerabilities.each { name, vuln ->
+                        details += "- ${name} → ${vuln.title} (${vuln.severity})\n"
                     }
+                    env.AUDIT_DETAILS = details
+
+                    // 🔥 Custom Status
+                    if (critical > 0 || high > 0 || moderate > 0) {
+                        env.AUDIT_STATUS = "⚠️ Vulnerability Found"
+                    } else {
+                        env.AUDIT_STATUS = "✅ No Vulnerability Found"
+                    }
+
+                    echo env.AUDIT_STATUS
+                    echo env.AUDIT_SUMMARY
+                    echo env.AUDIT_DETAILS
                 }
             }
         }
     }
 
     post {
-        failure {
+        always {
             emailext(
-                subject: "🚨 HIGH/CRITICAL Vulnerability",
+                subject: "${env.AUDIT_STATUS} - ${env.JOB_NAME}",
                 body: """\
 Build: ${env.JOB_NAME}
-Status: FAILURE
+Status: ${env.AUDIT_STATUS}
 URL: ${env.BUILD_URL}
 
-High/Critical vulnerabilities ditemukan.
+${env.AUDIT_SUMMARY}
+
+Details:
+${env.AUDIT_DETAILS}
 """,
                 to: "itsec@jubelio.com"
             )
-        }
-
-        unstable {
-            emailext(
-                subject: "⚠️ Moderate Vulnerability",
-                body: """\
-Build: ${env.JOB_NAME}
-Status: UNSTABLE
-URL: ${env.BUILD_URL}
-
-Terdapat vulnerability level moderate.
-""",
-                to: "itsec@jubelio.com"
-            )
-        }
-
-        success {
-            echo '✅ Aman'
         }
     }
 }
