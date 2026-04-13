@@ -38,11 +38,31 @@ pipeline {
                 script {
                     def audit = readJSON file: 'audit.json'
 
-                    def high = audit.metadata?.vulnerabilities?.high ?: 0
-                    def critical = audit.metadata?.vulnerabilities?.critical ?: 0
-                    def moderate = audit.metadata?.vulnerabilities?.moderate ?: 0
+                    def critical = 0
+                    def high = 0
+                    def moderate = 0
 
-                    // 🔹 Summary
+                    def details = ""
+
+                    // 🔥 parsing vulnerability detail + hitung manual
+                    audit.vulnerabilities.each { name, vuln ->
+                        if (vuln.via instanceof List) {
+                            vuln.via.each { item ->
+                                if (item instanceof Map) {
+                                    def severity = item.severity ?: "unknown"
+                                    def title = item.title ?: "Unknown Issue"
+
+                                    if (severity == 'critical') critical++
+                                    else if (severity == 'high') high++
+                                    else if (severity == 'moderate') moderate++
+
+                                    details += "- ${name} → ${title} (${severity})\n"
+                                }
+                            }
+                        }
+                    }
+
+                    // 🔹 Summary sesuai detail (FIX utama)
                     env.AUDIT_SUMMARY = """\
 Summary:
 - Critical: ${critical}
@@ -50,27 +70,9 @@ Summary:
 - Moderate: ${moderate}
 """
 
-                    // 🔹 Detail (robust parsing)
-                    def details = ""
-
-                    audit.vulnerabilities.each { name, vuln ->
-                        if (vuln.via instanceof List) {
-                            vuln.via.each { item ->
-                                if (item instanceof Map) {
-                                    def title = item.title ?: "Unknown Issue"
-                                    def severity = item.severity ?: vuln.severity ?: "unknown"
-                                    details += "- ${name} → ${title} (${severity})\n"
-                                }
-                            }
-                        } else {
-                            def severity = vuln.severity ?: "unknown"
-                            details += "- ${name} → ${severity}\n"
-                        }
-                    }
-
                     env.AUDIT_DETAILS = details ?: "No detailed vulnerabilities available"
 
-                    // 🔥 Custom Status
+                    // 🔥 Custom status
                     if (critical > 0 || high > 0 || moderate > 0) {
                         env.AUDIT_STATUS = "⚠️ Vulnerability Found"
                     } else {
