@@ -53,7 +53,6 @@ pipeline {
             }
         }
     }
-}
 
     post {
         failure {
@@ -88,3 +87,4 @@ Terdapat vulnerability level moderate.
             echo '✅ Aman'
         }
     }
+}
